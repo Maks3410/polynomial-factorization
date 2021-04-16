@@ -62,3 +62,11 @@ success_and_result lagrange2(vector<vector<int>> points) {
     }
     return {true, answer};
 }
+
+template <typename T>
+void print_vec(const vector<T>& a){
+    for (auto i : a) {
+        cout << i << ' ';
+    }
+    cout << endl;
+}

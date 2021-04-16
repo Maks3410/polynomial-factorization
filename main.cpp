@@ -27,7 +27,7 @@ int calculate(const polynomial &f, int n) {
 }
 
 bool equal(double x, double y) {
-    return fabs(x - y) < 1e-9;
+    return fabs(x - y) < 1e-7;
 }
 
 success_and_result divide(polynomial A, polynomial B) {
@@ -114,66 +114,19 @@ vector<double> standard_polynomial(const vector<double> &c, const vector<double>
     return a;
 }
 
-success_and_result interpol_lagrange(vector<vector<double>> Net) {
-    vector<double> c = get_lagrange(Net[0], Net[1]);
-    vector<double> arrayp = standard_polynomial(c, Net[0]);
+success_and_result interpol_lagrange(const vector<double> &x, const vector<double> &y) {
+    vector<double> c = get_lagrange(x, y);
+    vector<double> arrayp = standard_polynomial(c, x);
 
     polynomial ans;
-    bool f = true;
     for (double i : arrayp) {
         if (!equal(i, int(i))) {
-            f = false;
+            return success_and_result{false};
         } else {
             ans.monomials.push_back(int(i));
         }
     }
-    return success_and_result{f, ans};
-}
-
-success_and_result factorize(const polynomial &f) {
-    polynomial g;
-    vector<int> M;
-    vector<vector<int>> U;
-    success_and_result interpol;
-
-    bool success = false;
-
-    for (int i = 0; i * 2 <= f.degree && !success; i++) {
-        if (calculate(f, i) == 0) {
-            success = true;
-            g.monomials = vector<int>{-i, 1};
-            g.degree = 1;
-        }
-    }
-    if (!success) {
-        auto f0 = calculate(f, 0);
-        auto divisors_f0 = find_divisors(f0);
-        U = direct_multiplication(vector<vector<int>>(1), divisors_f0);
-        for (int i = 1; i * 2 <= f.degree; i++) {
-            auto fi = calculate(f, i);
-            M = find_divisors(fi);
-            U = direct_multiplication(U, M);
-            for (const vector<int> &u : U) {
-                auto poly_u = polynomial{u};
-                vector<vector<double>> g_points(2);
-                for (int j = 0; j <= i; j++) {
-                    g_points[0].push_back(double(j));
-                    g_points[1].push_back(double(calculate(poly_u, j)));
-                }
-
-                interpol = interpol_lagrange(g_points);
-
-                if (interpol.success) {
-                    g = interpol.result;
-                    if (divide(f, g).success) {
-                        g.degree = i;
-                        return success_and_result{true, g};
-                    }
-                }
-            }
-        }
-    }
-    return success_and_result{false};
+    return success_and_result{true, ans};
 }
 
 void print_polynomial(polynomial a) {
@@ -219,7 +172,72 @@ void print_polynomial(polynomial a) {
     cout << endl;
 }
 
+success_and_result factorize(const polynomial &f) {
+    polynomial g;
+    vector<int> M;
+    vector<vector<int>> U;
+    success_and_result interpol;
 
+
+    for (int i = 0; i * 2 <= f.degree; i++) {
+        if (calculate(f, i) == 0) {
+            g.monomials = vector<int>{-i, 1};
+            g.degree = 1;
+            return success_and_result{true, g};
+        }
+    }
+    auto f0 = calculate(f, 0);
+    auto divisors_f0 = find_divisors(f0);
+    U = direct_multiplication(vector<vector<int>>(1), divisors_f0);
+    for (int i = 1; i * 2 <= f.degree; i++) {
+        auto fi = calculate(f, i);
+        M = find_divisors(fi);
+        U = direct_multiplication(U, M);
+        for (const vector<int> &u : U) {
+            auto poly_u = polynomial{u};
+
+            vector<double> x, y;
+
+            for (int j = 0; j <= i; j++) {
+                x.push_back(double(j));
+                y.push_back(double(calculate(poly_u, j)));
+            }
+
+            interpol = interpol_lagrange(x, y);
+            // print_vec<double>(x);
+            // print_vec<double>(y);
+            // cout << "success = " << interpol.success << '\n';
+            // print_polynomial(poly_u);
+
+            if (interpol.success) {
+                g = interpol.result;
+                // print_polynomial(g);
+                if (divide(f, g).success) {
+                    g.degree = i;
+                    return success_and_result{true, g};
+                }
+            }
+        }
+    }
+    return success_and_result{false};
+}
+
+
+/*
+int main()
+{
+    vector<double> x = { 1, 2, 3, 4 };
+    vector<double> y = { 6, 9, 2, 5 };
+    //vector<vector<double>> g_points(2);
+    //g_points[0] = x;
+    //g_points[1] = y;
+    auto ip = interpol_lagrange(x, y);
+
+//    cout << "Newton polynomial:   ";   writeNewtonPolynomial( c, x );
+    cout << "Standard polynomial: ";   print_polynomial( ip.result );
+
+}
+*/
 int main() {
     int n;
     setlocale(LC_ALL, "Russian");
