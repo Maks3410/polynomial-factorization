@@ -1,36 +1,35 @@
 #include <iostream>
 #include <vector>
 #include <clocale>
+#include <cmath>
 
 
 using namespace std;
 
-struct polynomial {
-    vector<int> monomials;
-    int degree = int(monomials.size()) - 1;
+struct polynomial {                 // Структура данных, нужная для хранения многочленов.
+    vector<int> monomials;    // Содержит степень многочлена и список одночленов.
+    int degree = (int) (monomials.size()) - 1;
 };
 
-struct success_and_result {
-    bool success = false;
+struct success_and_result {         // Структура данных, хранящая признак успешности проведения операции
+    bool success = false;           // и, если операция проведена успешно, её результат.
     polynomial result;
 };
 
-#include "pfadd.cpp"
-
-int calculate(const polynomial &f, int n) {
+int calculate(const polynomial &f, int n) { // Считает значение многочлена в целой точке
     int sum = 0;
     int p = 0;
     for (auto i : f.monomials) {
-        sum += i * int(pow(n, p++));
+        sum += i * (int) (pow(n, p++));
     }
     return sum;
 }
 
-bool equal(double x, double y) {
-    return fabs(x - y) < 1e-7;
+bool equal(double x, double y) { // Сравнивает два числа с плавающей точкой
+    return fabs(x - y) < 1e-9;
 }
 
-success_and_result divide(polynomial A, polynomial B) {
+success_and_result divide(polynomial A, polynomial B) { // Делит многочлен на многочлен
     int n = (int) A.monomials.size() - 1;
     int m = (int) B.monomials.size() - 1;
     polynomial Q{vector<int>(n - m + 1)};
@@ -47,9 +46,10 @@ success_and_result divide(polynomial A, polynomial B) {
         return success_and_result{false};
 }
 
-vector<int> find_divisors(int n) {
+vector<int> find_divisors(int n) { // Находит целые делители целого цисла
     vector<int> ans;
     int i;
+    n = abs(n);
     ans.push_back(1);
     ans.push_back(-1);
     for (i = 2; i * i < n; i++) {
@@ -64,13 +64,15 @@ vector<int> find_divisors(int n) {
         ans.push_back(i);
         ans.push_back(-i);
     }
-    ans.push_back(n);
-    ans.push_back(-n);
+    if (n != 1 && n != -1) {
+        ans.push_back(n);
+        ans.push_back(-n);
+    }
     return ans;
 }
 
 vector<vector<int>> direct_multiplication(const vector<vector<int>> &A, const vector<int> &B) {
-    vector<vector<int>> ans;
+    vector<vector<int>> ans;   // Реализует прямое произведение множеств
     for (const auto &a : A) {
         for (const int &b : B) {
             auto t(a);
@@ -82,7 +84,7 @@ vector<vector<int>> direct_multiplication(const vector<vector<int>> &A, const ve
 }
 
 vector<double> get_lagrange(const vector<double> &x, vector<double> f) {
-    int N = x.size();
+    int N = x.size();   // Высчитывает интерполяционный многочлен Лагранжа по данному набору точек
     vector<double> c(N), temp(N);
 
     c[0] = f[0];
@@ -95,7 +97,7 @@ vector<double> get_lagrange(const vector<double> &x, vector<double> f) {
 }
 
 vector<double> standard_polynomial(const vector<double> &c, const vector<double> &x) {
-    int N = x.size();
+    int N = x.size();   // Приводит многочлен к стандартному виду
     vector<double> a(N, 0.0);
     vector<double> p(N), prev(N);
 
@@ -115,21 +117,25 @@ vector<double> standard_polynomial(const vector<double> &c, const vector<double>
 }
 
 success_and_result interpol_lagrange(const vector<double> &x, const vector<double> &y) {
-    vector<double> c = get_lagrange(x, y);
-    vector<double> arrayp = standard_polynomial(c, x);
+    vector<double> c = get_lagrange(x, y);      // Переводит полученный многочлен в виде вектора
+    vector<double> arrayp = standard_polynomial(c, x);  // вещественных чисел в многочлен типа polynomial
 
     polynomial ans;
     for (double i : arrayp) {
         if (!equal(i, int(i))) {
             return success_and_result{false};
         } else {
-            ans.monomials.push_back(int(i));
+            ans.monomials.push_back((int) (i));
         }
     }
-    return success_and_result{true, ans};
+
+    while (!ans.monomials.empty() && equal(ans.monomials.back(), 0))
+        ans.monomials.pop_back();
+
+    return success_and_result{ans.monomials.size() == x.size(), ans};
 }
 
-void print_polynomial(polynomial a) {
+void print_polynomial(polynomial a) {  // Красиво и понятно выводит на экран многочлен
     int n = a.degree;
     if (n > 1) {
         if (a.monomials[n] == -1)
@@ -145,8 +151,7 @@ void print_polynomial(polynomial a) {
             if (a.monomials[i] > 0) {
                 cout << '+';
                 (a.monomials[i] == 1) ? cout << "x^" << i : cout << a.monomials[i] << "x^" << i;
-            }
-            else
+            } else
                 (a.monomials[i] == -1) ? cout << "-x^" << i : cout << a.monomials[i] << "x^" << i;
         }
     }
@@ -156,8 +161,7 @@ void print_polynomial(polynomial a) {
             if (n > 1)
                 cout << '+';
             (a.monomials[1] == 1) ? cout << "x" : cout << a.monomials[1] << "x";
-        }
-        else
+        } else
             (a.monomials[1] == -1) ? cout << "-x" : cout << a.monomials[1] << "x";
     }
 
@@ -165,21 +169,20 @@ void print_polynomial(polynomial a) {
         if (a.monomials[0] > 0) {
             cout << '+';
             cout << a.monomials[0];
-        }
-        else
+        } else
             cout << a.monomials[0];
     }
     cout << endl;
 }
 
-success_and_result factorize(const polynomial &f) {
+success_and_result factorize(const polynomial &f) {  // Факторизует многочлен
     polynomial g;
     vector<int> M;
     vector<vector<int>> U;
     success_and_result interpol;
 
 
-    for (int i = 0; i * 2 <= f.degree; i++) {
+    for (int i = 0; i * 2 <= f.degree; i++) {  // Поиск линейных делителей вида x - i
         if (calculate(f, i) == 0) {
             g.monomials = vector<int>{-i, 1};
             g.degree = 1;
@@ -189,29 +192,24 @@ success_and_result factorize(const polynomial &f) {
     auto f0 = calculate(f, 0);
     auto divisors_f0 = find_divisors(f0);
     U = direct_multiplication(vector<vector<int>>(1), divisors_f0);
-    for (int i = 1; i * 2 <= f.degree; i++) {
+    for (int i = 1; i * 2 <= f.degree; i++) {   // Поиск остальных возможных делителей
         auto fi = calculate(f, i);
         M = find_divisors(fi);
         U = direct_multiplication(U, M);
-        for (const vector<int> &u : U) {
-            auto poly_u = polynomial{u};
-
-            vector<double> x, y;
-
+        vector<double> x;
+        for (int j = 0; j <= i; j++) {
+            x.push_back(j);
+        }
+        for (const auto &u : U) {
+            vector<double> y;
             for (int j = 0; j <= i; j++) {
-                x.push_back(double(j));
-                y.push_back(double(calculate(poly_u, j)));
+                y.push_back(double(u.at(j)));
             }
 
             interpol = interpol_lagrange(x, y);
-            // print_vec<double>(x);
-            // print_vec<double>(y);
-            // cout << "success = " << interpol.success << '\n';
-            // print_polynomial(poly_u);
 
             if (interpol.success) {
                 g = interpol.result;
-                // print_polynomial(g);
                 if (divide(f, g).success) {
                     g.degree = i;
                     return success_and_result{true, g};
@@ -222,28 +220,12 @@ success_and_result factorize(const polynomial &f) {
     return success_and_result{false};
 }
 
-
-/*
-int main()
-{
-    vector<double> x = { 1, 2, 3, 4 };
-    vector<double> y = { 6, 9, 2, 5 };
-    //vector<vector<double>> g_points(2);
-    //g_points[0] = x;
-    //g_points[1] = y;
-    auto ip = interpol_lagrange(x, y);
-
-//    cout << "Newton polynomial:   ";   writeNewtonPolynomial( c, x );
-    cout << "Standard polynomial: ";   print_polynomial( ip.result );
-
-}
-*/
 int main() {
     int n;
     setlocale(LC_ALL, "Russian");
     cout << "Введите степень многочлена:\n";
     cin >> n;
-    cout << "Введите одночлены (от наибольшей степени к наименьшей):\n";
+    cout << "Введите коэффициенты слогаемых (от наибольшей степени до наименьшей):\n";
     polynomial a{vector<int>(n + 1), n};
     for (int i = n; i >= 0; --i) {
         cin >> a.monomials[i];
@@ -252,12 +234,12 @@ int main() {
     cout << "Введенный многочлен:\n";
     print_polynomial(a);
 
-    auto factorized = factorize(a);
+    auto factor = factorize(a);
     vector<polynomial> answer;
-    while (factorized.success) {
-        answer.push_back(factorized.result);
-        a = divide(a, factorized.result).result;
-        factorized = factorize(a);
+    while (factor.success) {
+        answer.push_back(factor.result);
+        a = divide(a, factor.result).result;
+        factor = factorize(a);
     }
 
     if (!a.monomials.empty()) {
@@ -265,10 +247,9 @@ int main() {
     }
 
     cout << "Ответ:\n";
-    for (const auto& poly : answer) {
+    for (const auto &poly : answer) {
         print_polynomial(poly);
     }
     return 0;
 }
-
 

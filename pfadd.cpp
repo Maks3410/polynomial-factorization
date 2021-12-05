@@ -3,7 +3,7 @@
 using namespace std;
 
 polynomial multiply_polynomials(polynomial a, polynomial b){
-    polynomial ans{vector<int>(a.degree + b.degree + 1)};
+    polynomial ans{vector<long long>(a.degree + b.degree + 1)};
     for (int i = 0; i <= a.degree; ++i) {
         for (int j = 0; j <= b.degree; ++j) {
             ans.monomials[i + j] += (a.monomials[i] * b.monomials[j]);
@@ -13,8 +13,8 @@ polynomial multiply_polynomials(polynomial a, polynomial b){
 }
 
 polynomial sum_polynomials(polynomial a, polynomial b) {
-    polynomial answer{vector<int>(max(a.degree, b.degree) + 1)};
-    int i;
+    polynomial answer{vector<long long>(max(a.degree, b.degree) + 1)};
+    long long i;
     for (i = 0; i <= min(a.degree, b.degree); ++i) {
         answer.monomials[i] = a.monomials[i] + b.monomials[i];
     }
@@ -31,8 +31,8 @@ polynomial sum_polynomials(polynomial a, polynomial b) {
     return answer;
 }
 
-success_and_result divide_poly_num(polynomial a, int n) {
-    for (int i = 0; i <= a.degree; ++i) {
+success_and_result divide_poly_num(polynomial a, long long n) {
+    for (long long i = 0; i <= a.degree; ++i) {
         if (a.monomials[i] % n != 0)
             return success_and_result{false};
         a.monomials[i] /= n;
@@ -40,16 +40,17 @@ success_and_result divide_poly_num(polynomial a, int n) {
     return success_and_result{true, a};
 }
 
-success_and_result lagrange2(vector<vector<int>> points) {
-    int n = points.size() - 1;
-    polynomial answer{vector<int>(n)};
+success_and_result lagrange2(vector<long long> x, vector<long long> y) {
+    long long n = x.size() - 1;
+    // polynomial li{vector<long long>(n)};
+    polynomial answer;
     for (int i = 0; i <= n; ++i) {
-        polynomial li;
-        int del = 1;
+        polynomial li{vector<long long>(n)};
+        long long del = 1;
         for (int j = 0; j <= n; ++j) {
             if(i != j) {
-                li = multiply_polynomials(li, polynomial{vector<int>{1, -points[j][0]}});
-                del *= (points[i][0] - points[j][0]);
+                li = multiply_polynomials(li, polynomial{vector<long long>{1, -x[j]}});
+                del *= (x[i] - x[j]);
             }
         }
         auto division = divide_poly_num(li, del);
